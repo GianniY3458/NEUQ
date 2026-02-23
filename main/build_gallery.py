@@ -1,10 +1,9 @@
-# build_gallery.py
 import os
 import argparse
 from typing import List
 
 from storage import GalleryStorage
-from ssan_engine import SSANEngine  # 改成你的 engine 文件名
+from ssan_engine import SSANEngine
 
 
 def load_images_from_folder(folder: str, recursive: bool = True,
@@ -44,7 +43,6 @@ def main():
     store = GalleryStorage(args.artifact_dir)
     store.save(feats, img_paths)
     print("Saved gallery to:", args.artifact_dir)
-
 
 if __name__ == "__main__":
     main()
