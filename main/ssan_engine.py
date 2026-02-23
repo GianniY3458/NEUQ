@@ -7,6 +7,7 @@ import re
 from PIL import Image
 from torchvision import transforms
 from torchvision import models
+from torchvision.models import resnet50, ResNet50_Weights
 
 class Opt:
     def __init__(self,
@@ -165,8 +166,8 @@ class TextImgPersonReidNet(nn.Module):
         super(TextImgPersonReidNet, self).__init__()
 
         self.opt = opt
-        resnet50 = models.resnet50(pretrained=True)
-        self.ImageExtract = nn.Sequential(*(list(resnet50.children())[:-2]))
+        resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
+        self.ImageExtract = nn.Sequential(*(list(resnet.children())[:-2]))
         self.TextExtract = TextExtract(opt)
 
         self.global_avgpool = nn.AdaptiveMaxPool2d((1, 1))
@@ -291,7 +292,7 @@ class SSANEngine:
         ])
 
     def _load_checkpoint(self, ckpt_path):
-        ckpt = torch.load(ckpt_path, map_location="cpu")
+        ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
 
         # 你的 ckpt 真实权重就在 network
         state_dict = ckpt["network"]
