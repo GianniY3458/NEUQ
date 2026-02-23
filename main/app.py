@@ -6,8 +6,7 @@ from fastapi import FastAPI, HTTPException, File, UploadFile
 from contextlib import asynccontextmanager
 from pydantic import BaseModel, Field
 import os
-import torch
-import torchvision.models as models
+from pathlib import Path
 
 from config import settings
 from storage import GalleryStorage
@@ -104,12 +103,22 @@ async def upload_gallery(files: List[UploadFile] = File(...)):
     """
     接收图片文件并提取特征，保存到图库
     """
+    if engine is None or store is None:
+        raise HTTPException(status_code=503, detail="Engine not ready")
+
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded")
 
+    temp_dir = Path("temp_images")
+    temp_dir.mkdir(parents=True, exist_ok=True)
+
     new_img_paths = []
     for file in files:
-        img_path = os.path.join("temp_images", file.filename)
+        safe_name = os.path.basename(file.filename)
+        if not safe_name:
+            raise HTTPException(status_code=400, detail="Invalid filename")
+
+        img_path = str(temp_dir / safe_name)
         new_img_paths.append(img_path)
 
         with open(img_path, "wb") as f:
@@ -125,5 +134,6 @@ async def upload_gallery(files: List[UploadFile] = File(...)):
 
     # 3) 保存更新后的图库
     store.save(combined_features, combined_paths)
+    engine.set_gallery(combined_features, combined_paths)
 
     return UploadResponse(success=True, message="Gallery updated", uploaded_files=new_img_paths)
